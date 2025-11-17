@@ -4,86 +4,108 @@ import CreateNote from "./components/CreateNote";
 import NotesList from "./components/NotesList";
 
 function App() {
+  
   const [notes, setNotes] = useState(() => {
-    return JSON.parse(localStorage.getItem("notes")) || [];
+    let data;
+    try {
+      data = JSON.parse(localStorage.getItem("notes"));
+    } catch (e) {
+      console.error("error reading saved notes", e);
+    }
+    return data || [];
   });
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); 
 
+  
   useEffect(() => {
+    
     localStorage.setItem("notes", JSON.stringify(notes));
   }, [notes]);
 
+  
   const addNote = (title, content, tags) => {
-    const newNote = {
-      id: Date.now(),
-      title,
-      content,
-      tags,
+    const newObj = {
+      id: Date.now(),  
+      title: title,
+      content: content,
+      tags: tags,
       createdAt: new Date().toLocaleString(),
-      updatedAt: new Date().toLocaleString(),
+      updatedAt: new Date().toLocaleString()
     };
-    setNotes([newNote, ...notes]);
+
+    
+    setNotes([newObj, ...notes]);
   };
 
+ 
   const updateNote = (id, title, content, tags) => {
-    setNotes(
-      notes.map((note) =>
-        note.id === id
-          ? {
-              ...note,
-              title,
-              content,
-              tags,
-              updatedAt: new Date().toLocaleString(),
-            }
-          : note
-      )
-    );
+    const updatedList = notes.map((n) => {
+      if (n.id === id) {
+        return {
+          ...n,
+          title,
+          content,
+          tags,
+          updatedAt: new Date().toLocaleString()
+        };
+      }
+      return n;
+    });
+
+    setNotes(updatedList);
   };
 
+ 
   const deleteNote = (id) => {
-    setNotes(notes.filter((note) => note.id !== id));
+    const left = notes.filter((item) => item.id !== id);
+    setNotes(left);
   };
+
 
   const filteredNotes = notes.filter((note) => {
-    const q = searchQuery.toLowerCase();
-    return (
-      note.title.toLowerCase().includes(q) ||
-      note.tags.some((tag) => tag.toLowerCase().includes(q))
-    );
+    const text = searchQuery.toLowerCase();
+
+    const titleMatch = note.title.toLowerCase().includes(text);
+
+    
+    let tagMatch = false;
+    for (let t of note.tags) {
+      if (t.toLowerCase().includes(text)) {
+        tagMatch = true;
+        break;
+      }
+    }
+
+    return titleMatch || tagMatch;
   });
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white py-10 px-4">
-      <div className="max-w-5xl mx-auto">
+    <div style={{backgroundColor:"#0d0d0d"}} className="min-h-screen text-white px-5 py-8">
 
-        {/* Title */}
-        <h1 className="text-5xl font-extrabold text-center mb-10 
-                       bg-gradient-to-r from-orange-500 to-yellow-400 
-                       bg-clip-text text-transparent animate-fadeIn">
+      <div className="max-w-4xl mx-auto">
+
+        {/* heading */}
+        <h1 className="text-4xl font-bold text-center mb-6 bg-gradient-to-r from-orange-400 to-yellow-300 bg-clip-text text-transparent">
           Notes App
         </h1>
 
-        {/* Search */}
-        <div className="animate-fadeIn delay-100">
+        {/* search input */}
+        <div className="mb-5">
           <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
         </div>
 
-        {/* Create Note */}
-        <div className="animate-fadeIn delay-200">
+        {/* form to create new note */}
+        <div className="mb-7">
           <CreateNote addNote={addNote} />
         </div>
 
-        {/* Notes List */}
-        <div className="animate-fadeIn delay-300">
-          <NotesList
-            notes={filteredNotes}
-            updateNote={updateNote}
-            deleteNote={deleteNote}
-          />
-        </div>
-
+        {/* showing notes */}
+        <NotesList 
+          notes={filteredNotes} 
+          updateNote={updateNote} 
+          deleteNote={deleteNote} 
+        />
       </div>
     </div>
   );
